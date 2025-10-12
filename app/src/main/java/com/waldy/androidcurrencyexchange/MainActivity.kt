@@ -1,43 +1,52 @@
 package com.waldy.androidcurrencyexchange
 
-import android.annotation.SuppressLint
 import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.viewpager2.widget.ViewPager2
-import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayoutMediator
+import com.waldy.androidcurrencyexchange.MainActivityScreen
 import com.waldy.androidcurrencyexchange.api.AppApiService
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class MainActivity : AppCompatActivity() {
+/**
+ * This is the main entry point of your application.
+ * Its responsibilities are:
+ * 1. Handle Android lifecycle events.
+ * 2. Initialize app-wide dependencies (like API services).
+ * 3. Set the root Composable UI.
+ */
+class MainActivity: ComponentActivity() {
+
+    // You can keep the instance here for now.
+    // In a more advanced setup, this would be handled by a dependency injection library like Hilt.
     lateinit var appApiServiceInstance: AppApiService
 
-    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge();
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main_activity);
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
 
-        // INIT API CALL SERVICE
-        var retrofit: Retrofit = Retrofit.Builder()
+        // --- Logic and Initialization ---
+        initializeApiService()
+
+        // --- Setting the UI ---
+        // setContent is the bridge between the Activity and Jetpack Compose.
+        // It hosts your Composable UI.
+        setContent {
+            // Here, you just call your top-level screen Composable.
+            // You could also wrap it in your app's theme.
+            // AppTheme {
+            MainActivityScreen()
+            // }
+        }
+    }
+
+    private fun initializeApiService() {
+        val retrofit = Retrofit.Builder()
             .baseUrl("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/")
             .addConverterFactory(GsonConverterFactory.create())
-            .build();
+            .build()
 
-        appApiServiceInstance = retrofit.create<AppApiService>(AppApiService::class.java);
-
-        val tabLayout = findViewById<TabLayout>(R.id.tabLayout);
-        val viewPager = findViewById<ViewPager2>(R.id.viewPager);
-        val tabTitle = arrayOf("Currency Exchange", "Currency Ratio");
-
-        val adapter = TabAdapter(this);
-        viewPager.adapter = adapter;
-
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            tab.text = tabTitle[position];
-        }.attach();
-
+        appApiServiceInstance = retrofit.create(AppApiService::class.java)
     }
 }
