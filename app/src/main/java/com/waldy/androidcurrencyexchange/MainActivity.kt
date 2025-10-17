@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.waldy.androidcurrencyexchange.MainActivityScreen
 import com.waldy.androidcurrencyexchange.api.AppApiService
+import com.waldy.androidcurrencyexchange.ui.theme.AndroidCurrencyExchangeTheme
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -36,7 +37,9 @@ class MainActivity: ComponentActivity() {
             // Here, you just call your top-level screen Composable.
             // You could also wrap it in your app's theme.
             // AppTheme {
-            MainActivityScreen()
+            AndroidCurrencyExchangeTheme {
+                MainActivityScreen()
+            }
             // }
         }
     }

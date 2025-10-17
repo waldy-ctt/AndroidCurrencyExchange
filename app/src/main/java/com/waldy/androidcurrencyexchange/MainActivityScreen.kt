@@ -1,16 +1,26 @@
 package com.waldy.androidcurrencyexchange
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
 /**
@@ -18,49 +28,44 @@ import kotlinx.coroutines.launch
  * It is a stateless Composable, meaning it doesn't create or manage its own data.
  */
 @OptIn(ExperimentalFoundationApi::class)
+@Preview(showBackground = true)
 @Composable
 fun MainActivityScreen() {
-    val tabTitles = listOf("Currency Exchange", "Currency Ratio")
+    val tabTitles = listOf("Exchange", "Ratios")
 
-    // State for the pager (which page is selected) is managed here, as it's pure UI state.
     val pagerState = rememberPagerState { tabTitles.size }
-    val scope = rememberCoroutineScope() // Scope to handle tab click animations
+    val scope = rememberCoroutineScope()
 
-    // Scaffold provides the basic layout structure (like app bars, etc.)
-    // The innerPadding automatically handles safe areas like the status bar.
+    // Using Material3's recommended surface color for background
+    val backgroundColor = MaterialTheme.colorScheme.surface
+
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor), // Apply a consistent background color
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
-            TabRow(selectedTabIndex = pagerState.currentPage) {
-                tabTitles.forEachIndexed { index, title ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            // Animate to the clicked page
-                            scope.launch {
-                                pagerState.animateScrollToPage(index)
-                            }
-                        },
-                        text = {
-                            Text(
-                                text = title,
-                                maxLines = 1, // Prevent text from wrapping
-                                overflow = TextOverflow.Ellipsis // Add "..." if text is too long
-                            )
-                        },
-                        selectedContentColor = MaterialTheme.colorScheme.primary,
-                        unselectedContentColor = MaterialTheme.colorScheme.outline,
-                    )
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp, vertical = 8.dp) // Add padding around the content
+        ) {
+            // A custom, modern TabRow implementation
+            CustomTabRow(
+                tabTitles = tabTitles,
+                selectedTabIndex = pagerState.currentPage,
+                onTabClick = { index ->
+                    scope.launch {
+                        pagerState.animateScrollToPage(index)
+                    }
                 }
-            }
+            )
 
-            // This is the pager that swipes between your different screens.
+            Spacer(modifier = Modifier.height(16.dp))
+
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
             ) { page ->
-                // When the page changes, show the corresponding screen's Composable.
                 when (page) {
                     0 -> CurrencyExchangeScreen()
                     1 -> CurrencyRatioScreen()
@@ -70,18 +75,74 @@ fun MainActivityScreen() {
     }
 }
 
+@Composable
+fun CustomTabRow(
+    tabTitles: List<String>,
+    selectedTabIndex: Int,
+    onTabClick: (Int) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(50)) // Pill-shaped container
+            .background(MaterialTheme.colorScheme.surfaceVariant) // A subtle background for the tabs
+            .padding(4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            tabTitles.forEachIndexed { index, title ->
+                val isSelected = selectedTabIndex == index
+
+                // Animate color changes for a smoother transition
+                val backgroundColor by animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    animationSpec = tween(durationMillis = 300, easing = LinearEasing),
+                    label = "tab_background_color"
+                )
+                val contentColor by animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    animationSpec = tween(durationMillis = 300, easing = LinearEasing),
+                    label = "tab_content_color"
+                )
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(50))
+                        .background(backgroundColor)
+                        .clickable(onClick = { onTabClick(index) }) // Use a standard clickable modifier
+                        .padding(vertical = 12.dp, horizontal = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = title,
+                        color = contentColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
 
 // --- Placeholder Screens ---
-// In the future, these would be in their own files too (e.g., currency_exchange/CurrencyExchangeScreen.kt)
-
+// It's a good practice to center the placeholder content for a better preview experience.
 @Composable
 fun CurrencyExchangeScreen() {
-    // TODO: Build the UI for the currency exchange feature here
-    Text("Content for Currency Exchange")
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Content for Currency Exchange", fontSize = 18.sp)
+    }
 }
 
 @Composable
 fun CurrencyRatioScreen() {
-    // TODO: Build the UI for the currency ratio feature here
-    Text("Content for Currency Ratio")
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Content for Currency Ratio", fontSize = 18.sp)
+    }
 }
